@@ -21,7 +21,7 @@ const wss = new WebSocket.Server({ server });
 
 app.get('/', function (req, res) {
 	res.sendFile( __dirname + "/" + "index.html" );
-})
+});
 
 app.post('/insertAdvert', function(req, res) {
 	console.log("inserting advert at: "+req.body.latitude+" "+req.body.longitude);
