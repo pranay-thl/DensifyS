@@ -70,14 +70,13 @@ function nearby_clients(dist,id){
 	return res_arr;
 }
 
-function send_nearby(dist,id,ws){
-	var res_data={"clients":[]};
-	res_data["clients"]=nearby_clients(dist,id);
-	ws.send(JSON.stringify(res_data));
+function send_nearby(dist,id,send_data){
+	send_data["clients"]=nearby_clients(dist,id);
 }
 
-function send_advertisements(dist,id,ws)
+function send_advertisements(dist,id,ws,send_data)
 {
+	send_data['advert']=[]
 	densifydb.collection('advert').find().toArray(function(err, advertArray) {
 		var thisDevLat = dataMap[id].latitude;
 		var thisDevLon = dataMap[id].longitude;	
@@ -87,9 +86,10 @@ function send_advertisements(dist,id,ws)
 				thisDevLon, advertArray[i].latitude, advertArray[i].longitude);
 			console.log("dist is "+dis);
 			if(dis<=dist){
-				ws.send(JSON.stringify({advert:advertArray[i].advertData}));
+				send_data['advert'].push(advertArray[i].advertData);
 			}
 		}
+		ws.send(JSON.stringify(send_data));
 	});
 }
 wss.on('connection', function connection(ws,req) {
@@ -102,8 +102,9 @@ wss.on('connection', function connection(ws,req) {
 		var deviceData = JSON.parse(data);
 		dataMap[deviceData.deviceId]=deviceData;
 		//compute(deviceData.deviceId);
-		send_nearby(2,deviceData.deviceId,ws);
-		send_advertisements(2,deviceData.deviceId,ws);
+		var send_data={};
+		send_nearby(2,deviceData.deviceId,send_data);
+		send_advertisements(2,deviceData.deviceId,ws,send_data);
 	});
 	//ws.send("You are connected. Current Client Size is: "+wss.clients.size);
 	console.log("IP Connnected:"+ip+"\n"+" Now Total Clients are: "+wss.clients.size);
